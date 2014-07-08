@@ -328,8 +328,8 @@ final class MobileUnitTestEngine extends ArcanistBaseUnitTestEngine {
         $_ = 0;
         exec("xcodebuild -showBuildSettings | grep PROJECT_TEMP_DIR -m1 | grep -o '/.\+$'",
             $build_dir_output, $_);
-        $build_dir_output[0] .= "/Debug-iphonesimulator/UnitTests.build/Objects-normal/i386/";
-        chdir($build_dir_output[0]);
+        $build_dir_output[0] .= "/Debug-iphonesimulator/*Tests.build/Objects-normal/i386/";
+		exec("cd " . $build_dir_output[0]);
         exec("gcov * > /dev/null 2> /dev/null");
 
         $coverage = array();
