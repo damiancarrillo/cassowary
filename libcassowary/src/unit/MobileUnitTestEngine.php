@@ -29,7 +29,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
  * Comprehensive linter that takes the various platform-specific linters
- * (OCUnit, Android) and combines them into one unified use case.
+ * and combines them into one unified use case.
  *
  * To use, set unit_engine in .arcconfig, or use --engine flag
  * with arc unit.
@@ -326,10 +326,29 @@ final class MobileUnitTestEngine extends ArcanistUnitTestEngine {
         // for all implementations
         $build_dir_output = array();
         $_ = 0;
-        exec("xcodebuild -showBuildSettings | grep PROJECT_TEMP_DIR -m1 | grep -o '/.\+$'",
-            $build_dir_output, $_);
-        $build_dir_output[0] .= "/Debug-iphonesimulator/*Tests.build/Objects-normal/i386/";
-		exec("cd " . $build_dir_output[0]);
+        $cmd = "xcodebuild -showBuildSettings -configuration Debug"
+               . " -sdk iphonesimulator -arch i386 "
+               . " | grep OBJECT_FILE_DIR_normal -m1 | cut -d = -f2";
+        exec($cmd, $build_dir_output, $_);
+        if($_ != 0)
+        {
+            $cmd = "xcodebuild -showBuildSettings -configuration Debug"
+                    ." | grep TARGET_TEMP_DIR -m1 | cut -d = -f2";
+            $_ = 0;
+            exec($cmd, $build_dir_output, $_);
+            $build_dir_output[0] .= "/Objects-normal";
+        }
+
+        $build_dir_output[0] = trim($build_dir_output[0]);
+        if(file_exists($build_dir_output[0] . "/x86_64")) {
+            $build_dir_output[0] .= "/x86_64/";
+        } else {
+            $build_dir_output[0] .= "/i386/";
+        }
+
+        if(chdir($build_dir_output[0]) == false) {
+            die("Directory ".$build_dir_output[0]." does not exist!\n");
+        }
         exec("gcov * > /dev/null 2> /dev/null");
 
         $coverage = array();
